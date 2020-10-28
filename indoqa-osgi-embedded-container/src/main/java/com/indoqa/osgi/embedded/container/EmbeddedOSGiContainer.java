@@ -29,6 +29,7 @@ import javax.annotation.PreDestroy;
 import org.apache.felix.framework.Felix;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -203,5 +204,13 @@ public class EmbeddedOSGiContainer {
                 "Initialized service provider: " + serviceProvider.getClass().getName() + "; service-provider-hashCode="
                     + System.identityHashCode(serviceProvider));
         }
+    }
+
+    public BundleContext getBundleContext() {
+        return this.hostActivator.getBundleContext();
+    }
+
+    public Felix getFelix() {
+        return felix;
     }
 }

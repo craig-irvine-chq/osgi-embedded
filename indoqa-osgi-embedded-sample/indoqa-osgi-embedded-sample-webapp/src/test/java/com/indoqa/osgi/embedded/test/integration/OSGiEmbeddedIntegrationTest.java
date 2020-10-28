@@ -18,8 +18,7 @@ package com.indoqa.osgi.embedded.test.integration;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.felix.framework.Felix;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +36,9 @@ import com.indoqa.osgi.embedded.container.EmbeddedOSGiContainer;
 import com.indoqa.osgi.embedded.sample.interfaces.DateService;
 import com.indoqa.osgi.embedded.sample.provider.DateServiceProvider;
 import com.indoqa.osgi.embedded.services.EmbeddedOSGiServiceProvider;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
 
 public class OSGiEmbeddedIntegrationTest {
 
@@ -68,6 +71,7 @@ public class OSGiEmbeddedIntegrationTest {
         this.embeddedOSGiContainer.initialize();
     }
 
+    //Felix File Install existing example
     @Test
     public void installAndUninstallBundle() throws IOException {
         DateService[] dateServices = this.dateServiceProvider.getDateServices();
@@ -79,10 +83,46 @@ public class OSGiEmbeddedIntegrationTest {
         dateServices = this.dateServiceProvider.getDateServices();
         assertEquals(1, dateServices.length);
 
+        Bundle[] bundles = embeddedOSGiContainer.getBundleContext().getBundles();
+
         bundle.delete();
         this.sleep(1000);
         dateServices = this.dateServiceProvider.getDateServices();
         assertEquals(0, dateServices.length);
+    }
+
+    // ticket example
+    @Test
+    public void programaticallyInstallAndUninstallBundle() throws BundleException, FileNotFoundException {
+        //Check no date services are available at the start
+        DateService[] dateServices = this.dateServiceProvider.getDateServices();
+        assertEquals(0, dateServices.length);
+
+        //embedded container extended to provide access to bundle context
+        BundleContext bundleContext = embeddedOSGiContainer.getBundleContext();
+
+        String jarPath = "file:/D:/Documents/tutorials/osgi-embedded/indoqa-osgi-embedded-sample/indoqa-osgi-embedded-sample-bundle/target/indoqa-osgi-embedded-sample-bundle-0.1.0-SNAPSHOT.jar";
+        //Get a handle on the installed bundle
+        Bundle bundleInstalled = bundleContext.installBundle(jarPath);
+
+        //Start bundle, the start function registers the service DateService
+        bundleInstalled.start();
+
+        //Refresh list of DateServices
+        dateServices = this.dateServiceProvider.getDateServices();
+        //We've got one!
+        assertEquals(1, dateServices.length);
+
+        //Example of calling the service
+        DateService dateService = dateServices[0];
+        String date = dateService.getDate();
+
+        //Call uninstall on the bundle reference
+        bundleInstalled.uninstall();
+
+        dateServices = this.dateServiceProvider.getDateServices();
+        assertEquals(0, dateServices.length);
+
     }
 
     @After
